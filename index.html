@@ -269,7 +269,7 @@
             "Vocal Jazz - Singing", "Electro Swing - Retro & Dance", "Future Jazz - Experimental Jazz", "Tango Nuevo - Modern Tango", "Neoclassical - Modern Classical",
             "Minimalism - Repeating Motifs", "Sound Art - Sound Art", "Ambient Industrial - Dark Textures", "Dungeon Synth - Fantasy Atmosphere", "Chiptune - 8-bit Sound",
             "Bitpop - 8-bit Pop", "Vapor Soul - Slow R&B", "Witch House - Dark & Slow", "Seapunk - Water & '90s", "PC Music - Extreme Pop",
-            "Breakcore - Chaotic Rhythms", "Digital Hardcore - Fast & Noisy", "Terrorcore - Aggressive", "Frenchcore - French Hardcore", "Jumpstyle - Belgian Hardcore",
+            "Breakcore - Chaotically Rhythmic", "Digital Hardcore - Fast & Noisy", "Terrorcore - Aggressive", "Frenchcore - French Hardcore", "Jumpstyle - Belgian Hardcore",
             "Hard Bass - Russian Bass", "Miami Bass - '80s Electro", "Jersey Club - Bounce Rhythm", "Baltimore Club - Fast Tempo", "UK Funky - African Rhythms",
             "Ghetto Tech - Detroit House/Techno", "Electroclash - '80s Electro", "Italo Disco - Italian Synth", "New Beat - Belgian Tempo", "Hypnagogic Pop - Dreamy Pop",
             "Chillout - Slow Tempo", "Exotica - Exotic Sounds", "Spoken Word - Spoken Word", "Poetry Slam - Rhythmic Poetry", "Avant-Garde - Innovation",
@@ -326,7 +326,7 @@
         function copyResult() {
             const resultContainer = document.getElementById('result-container');
             const text = resultContainer.textContent.trim();
-            if (text && !text.includes('Your generated lyric will appear here')) {
+            if (text && !text.includes('Your generated lyric will appear here') && !text.includes('Error:')) {
                 copyToClipboard(text);
             }
         }
@@ -343,7 +343,7 @@
             const listDisplayElement = document.getElementById('genre-list-display');
             const generateButton = document.getElementById('generate-button');
             const topicInput = document.getElementById('topic-input');
-            const copyButton = document.getElementById('copy-button'); // Initialize copy button reference
+            const copyButton = document.getElementById('copy-button'); 
 
             // Populate Select and Tag list
             genres.forEach(genre => {
@@ -417,7 +417,7 @@
                     <p class="text-indigo-400">AI is writing your ${selectedGenre} lyric...</p>
                 </div>
             `;
-            copyButton.classList.add('hidden');
+            copyButton.classList.add('hidden'); 
             sourceContainer.classList.add('hidden');
             sourceList.innerHTML = '';
 
@@ -439,7 +439,7 @@
                 (BRIDGE) - The tone must be more intense or changed to serve as a climax
                 (OUTRO) - Gradual fade-out and conclusion.
                 
-                **IMPORTANT RULE:** Create a clean, unformatted plain text output. DO NOT USE any formatting tags like ** (bold), * (italics), # (headings), or other Markdown syntax. The text must be ready for copying.
+                **IMPORTANT RULE:** Create a clean, unformatted plain text output. DO NOT USE any formatting tags like ** (bold), * (italics), # (headings) or other Markdown syntax. The text must be ready for copying.
                 **LANGUAGE:** Use the language specified in the user request.
             `;
 
@@ -523,7 +523,7 @@
                     break; 
 
                 } catch (error) {
-                    console.error('Error during API call:', error);
+                    console.error(`Error on attempt ${attempt + 1}:`, error.message);
                     attempt++;
                     if (attempt < maxRetries) {
                         // Exponential backoff
@@ -531,8 +531,12 @@
                         console.log(`Retrying attempt in ${delay / 1000} seconds...`);
                         await new Promise(resolve => setTimeout(resolve, delay));
                     } else {
-                        // Final attempt failed
-                        resultContainer.innerHTML = `<p class="text-red-400 font-bold">Error: Failed to retrieve lyric after ${maxRetries} attempts. Please try again later. (${error.message})</p>`;
+                        // Final attempt failed - check for "Failed to fetch" (network/security) vs API status errors
+                        const errorMsg = error.message.includes('Failed to fetch') 
+                            ? `Network/Security Error: The browser could not connect to the API server. Please check your internet connection or browser security settings.` 
+                            : `API Error: ${error.message}`;
+
+                        resultContainer.innerHTML = `<p class="text-red-400 font-bold">ERROR: Failed to retrieve lyric after ${maxRetries} attempts.</p><p class="text-gray-400">${errorMsg}</p>`;
                         copyButton.classList.add('hidden');
                     }
                 }
